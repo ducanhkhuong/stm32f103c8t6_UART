@@ -4,32 +4,34 @@
 #include "stdio.h"
 #include <string.h>
 #include <ctype.h>
-#define LED_PIN 13
+
+//speed monitor
 #define BAUD_RATE 9600
 
 //varible
 char rxBuffer[100];
 int rxIndex = 0;
 
-//func
+//UART
 void USART_Configuration(void);
 void USART_SendChar(char ch);
 void USART_SendString(char *str);
+void USART1_IRQHandler(void);
 
+//Clock
 void SysTick_Init(void);
 void delay_ms(uint32_t ms);
 void delay_us(uint32_t us);
 
-void USART1_IRQHandler(void);
-
+//String
 void trim(char *str);
 
-//handle
+//function
 void USART_Configuration(void) {
     RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
     RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
     GPIOA->CRH &= ~(GPIO_CRH_CNF9 | GPIO_CRH_MODE9);
-    GPIOA->CRH |= GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9;   // A9-TX
+    GPIOA->CRH |= GPIO_CRH_CNF9_1 | GPIO_CRH_MODE9;    // A9-TX
     GPIOA->CRH &= ~(GPIO_CRH_CNF10 | GPIO_CRH_MODE10); // A10-RX
     GPIOA->CRH |= GPIO_CRH_CNF10_0;
 
@@ -97,35 +99,36 @@ void trim(char *str) {
 int main(void) {
     SysTick_Init();
     USART_Configuration();
-	  GPIO_PinConfigure(GPIOC,13,GPIO_OUT_PUSH_PULL,GPIO_MODE_OUT2MHZ);
-	  GPIO_PinWrite(GPIOC,13,1);
+    GPIO_PinConfigure(GPIOC,13,GPIO_OUT_PUSH_PULL,GPIO_MODE_OUT2MHZ);
+    GPIO_PinWrite(GPIOC,13,1);
     while (1) {
-        //gui
-        //char buffer[20];
-        //static int counter = 0;
-        //counter++;
-        //sprintf(buffer, "Counter: %d\r\n", counter);
-        //USART_SendString(buffer);
-        
-			  //nhan
+        /*Transmiter
+        char buffer[20];
+        static int counter = 0;
+        counter++;
+        sprintf(buffer, "Counter: %d\r\n", counter);
+        USART_SendString(buffer);
+        */
+	    
+	//Receive
         if (rxIndex > 0) {
-					  trim(rxBuffer);
-					  if(strcmp(rxBuffer, "on")==0){
-						   GPIO_PinWrite(GPIOC,13,0);
-							 memset(rxBuffer, 0, sizeof(rxBuffer));
-					     rxIndex = 0;
-						}
-						if(strcmp(rxBuffer,"off")==0){
-						   GPIO_PinWrite(GPIOC,13,1);
-							 memset(rxBuffer, 0, sizeof(rxBuffer));
-					     rxIndex = 0;  
-						}
-						if(strcmp(rxBuffer, "on")!=0 && strcmp(rxBuffer, "off") !=0){
-						   memset(rxBuffer, 0, sizeof(rxBuffer));
-					     rxIndex = 0;  
-						}
-				}
-	      delay_ms(50);
+		trim(rxBuffer);
+		if(strcmp(rxBuffer, "on")==0){
+	   		GPIO_PinWrite(GPIOC,13,0);
+			memset(rxBuffer, 0, sizeof(rxBuffer));
+	    		rxIndex = 0;
+		}
+		if(strcmp(rxBuffer,"off")==0){
+		       GPIO_PinWrite(GPIOC,13,1);
+		       memset(rxBuffer, 0, sizeof(rxBuffer));
+	               rxIndex = 0;  
+		}
+		if(strcmp(rxBuffer, "on")!=0 && strcmp(rxBuffer, "off") !=0){
+		       memset(rxBuffer, 0, sizeof(rxBuffer));
+	     	       rxIndex = 0;  
+		}
+ 	}
+      delay_ms(50);
     }
 }
 
